@@ -254,7 +254,10 @@ function toast(msg) {
 // Fetch the count as soon as the page opens (this also wakes the Google script up),
 // so a tap never waits on the network.
 const wait = ms => new Promise(r => setTimeout(r, ms));
-const statsReady = api(null).then(d => (state.stats = d)).catch(() => null);
+// Testing: add ?reset to the address to clear this device's vote.
+if (new URLSearchParams(location.search).has("reset")) { try { localStorage.removeItem("staxi-v4-voted-" + MOTION); } catch {} }
+const remember = d => { state.stats = d; store.set("staxi-stats-" + MOTION, d); return d; };
+const statsReady = api(null).then(remember).catch(() => null);
 
 $$("[data-vote]").forEach(b => b.addEventListener("click", async () => {
   if (state.vote) return;
@@ -269,7 +272,7 @@ $$("[data-vote]").forEach(b => b.addEventListener("click", async () => {
 async function send(payload, tries) {
   try {
     const d = await api(payload);
-    if (d) { state.stats = d; if ($("#s-vote").classList.contains("on")) paint(); else $("#places").textContent = d.places; }
+    if (d) { remember(d); if ($("#s-vote").classList.contains("on")) paint(); else $("#places").textContent = d.places; }
   } catch (e) {
     if (tries > 1) { await wait(2000); send(payload, tries - 1); }
   }
@@ -358,9 +361,13 @@ $("#ptoggle").addEventListener("click", e => {
 (async function init() {
   const prior = store.get("staxi-v4-voted-" + MOTION);
   if (!prior) return;
+  // Already voted on this device: show the results now, from the last count seen, and refresh when the live count arrives.
   state.vote = prior.vote;
+  $$("[data-vote]").forEach(x => x.classList.toggle("picked", x.dataset.vote === prior.vote));
+  state.stats = state.stats || store.get("staxi-stats-" + MOTION) || { ...SEED_VOTES, places: SEED_PLACES };
+  showCount();
   const d = await statsReady;
-  if (d) showCount();
+  if (d && $("#s-vote").classList.contains("on")) paint();
 })();
 </script>
 </body>
