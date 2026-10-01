@@ -25,6 +25,7 @@
 html,body{margin:0;background:var(--ink);color:var(--paper)}
 body{font-family:var(--text);font-size:16px;line-height:1.5;min-height:100svh;-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none;border-radius:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:3px solid var(--hazard);outline-offset:3px}
 [tabindex="-1"]:focus{outline:none}
 
@@ -34,9 +35,9 @@ header{padding:12px 0 16px;border-bottom:1px solid var(--line)}
 .mark b{font-weight:400;color:var(--hazard)}
 .label{font-family:var(--text);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 
-.screen{display:none;padding-top:28px;animation:in .35s ease both}
+.screen{display:none;padding-top:28px;animation:in .25s ease both}
 .screen.on{display:block}
-@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes in{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.screen{animation:none!important}.bar i{transition:none!important}}
 
 h1,h2{font-family:var(--display);font-weight:400;margin:0;text-transform:uppercase;line-height:.98;text-wrap:balance}
@@ -46,8 +47,8 @@ h2{font-size:48px}
 
 /* Vote: identical treatment for both sides, on purpose */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px}
-.duel button{min-height:140px;background:none;border:2px solid var(--paper);cursor:pointer;font-family:var(--display);font-size:68px;line-height:1;text-transform:uppercase;transition:transform .1s}
-.duel button:active{transform:scale(.97)}
+.duel button{min-height:140px;background:none;border:2px solid var(--paper);cursor:pointer;font-family:var(--display);font-size:68px;line-height:1;text-transform:uppercase}
+.duel button.picked{background:var(--hazard);border-color:var(--hazard);color:var(--ink)}
 .anon{display:flex;gap:8px;align-items:center;margin-top:14px;color:var(--muted)}
 
 /* Live count, shown in place of the buttons */
@@ -57,7 +58,7 @@ h2{font-size:48px}
 .bar .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .bar .stamp,.bar .pct{font-family:var(--display);font-size:40px;line-height:.95}
 .bar .track{height:18px;background:var(--ink-2);border:1px solid var(--line)}
-.bar i{display:block;height:100%;width:0;background:var(--paper);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.bar i{display:block;height:100%;width:100%;background:var(--paper);transform:scaleX(0);transform-origin:left;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
 .bar.mine i{background:var(--hazard)}
 .bar.mine .stamp::after{content:" ← you";font-family:var(--text);font-weight:600;font-size:12px;letter-spacing:.08em;color:var(--hazard);vertical-align:middle}
 /* Event screen */
@@ -98,6 +99,7 @@ legend{padding:0;margin-bottom:8px}
 .ticket .body{padding:16px;display:grid;gap:2px}
 .ticket .no{font-family:var(--display);font-size:80px;line-height:.9}
 
+.ig{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;color:var(--paper);font-weight:600;text-decoration:underline;text-underline-offset:4px;min-height:44px}
 footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line)}
 footer .link{margin:0;padding:0}
 .privacy{display:none;margin:10px 0 0;color:var(--paper-soft);font-size:14px}
@@ -185,6 +187,10 @@ footer .link{margin:0;padding:0}
     </div>
     <button class="btn" id="share">Send to someone who disagrees</button>
     <button class="btn ghost" id="cal">Add to calendar</button>
+    <a class="ig" href="https://www.instagram.com/stax.sta/" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      Follow @stax.sta for the result
+    </a>
   </section>
   </main>
 
@@ -215,7 +221,8 @@ const store = {
 async function api(payload) {
   if (!API_URL) return demo(payload);
   const res = payload
-    ? await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
+    // keepalive: the vote still lands if they close the tab straight away
+    ? await fetch(API_URL, { method: "POST", body: JSON.stringify(payload), keepalive: payload.type === "vote" })
     : await fetch(API_URL);
   if (!res.ok) throw new Error("Network");
   const data = await res.json();
@@ -232,7 +239,7 @@ function demo(p) {
 
 function go(id) {
   $$(".screen").forEach(s => s.classList.toggle("on", s.id === id));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo(0, 0);
   const h = $("#" + id + " h1, #" + id + " h2");
   if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
 }
@@ -243,22 +250,38 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2600);
 }
 
-// --- Vote: one tap, then the count appears in place ---
+// --- Vote: one tap, the count appears instantly, then on to the debate ---
+// Fetch the count as soon as the page opens (this also wakes the Google script up),
+// so a tap never waits on the network.
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const statsReady = api(null).then(d => (state.stats = d)).catch(() => null);
+
 $$("[data-vote]").forEach(b => b.addEventListener("click", async () => {
   if (state.vote) return;
   state.vote = b.dataset.vote;
-  $$("[data-vote]").forEach(x => x.disabled = true);
-  b.style.background = "var(--hazard)"; b.style.color = "var(--ink)"; b.style.borderColor = "var(--hazard)";
-  try {
-    state.stats = await api({ type: "vote", motion: MOTION, vote: state.vote });
-    store.set("staxi-v4-voted-" + MOTION, { vote: state.vote });
-    showCount();
-  } catch (e) {
-    state.vote = null; $$("[data-vote]").forEach(x => { x.disabled = false; x.removeAttribute("style"); });
-    toast("Couldn't count that. Try again.");
-  }
+  b.classList.add("picked");
+  const base = (await Promise.race([statsReady, wait(600)])) || state.stats || { ...SEED_VOTES, places: SEED_PLACES };
+  state.stats = { ...base, [state.vote]: base[state.vote] + 1 };
+  store.set("staxi-v4-voted-" + MOTION, { vote: state.vote });
+  showCount();
+  send({ type: "vote", motion: MOTION, vote: state.vote }, 2);
 }));
+async function send(payload, tries) {
+  try {
+    const d = await api(payload);
+    if (d) { state.stats = d; if ($("#s-vote").classList.contains("on")) paint(); else $("#places").textContent = d.places; }
+  } catch (e) {
+    if (tries > 1) { await wait(2000); send(payload, tries - 1); }
+  }
+}
+let advance;
 function showCount() {
+  paint();
+  $("#s-vote").classList.add("voted");
+  clearTimeout(advance);
+  advance = setTimeout(() => { if ($("#s-vote").classList.contains("on")) go("s-come"); }, 3000);
+}
+function paint() {
   const { yes, no, places } = state.stats, n = yes + no, total = n || 1;
   const py = Math.round(yes / total * 100), pn = n ? 100 - py : 0;
   $("#b-yes").classList.toggle("mine", state.vote === "yes");
@@ -266,9 +289,10 @@ function showCount() {
   $("#p-yes").textContent = py + "%"; $("#p-no").textContent = pn + "%";
   $("#total").textContent = n + (n === 1 ? " vote" : " votes") + " so far";
   $("#places").textContent = places;
-  $("#s-vote").classList.add("voted");
-  requestAnimationFrame(() => setTimeout(() => { $("#i-yes").style.width = py + "%"; $("#i-no").style.width = pn + "%"; }, 80));
-  setTimeout(() => { if ($("#s-vote").classList.contains("on")) go("s-come"); }, 3000);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    $("#i-yes").style.transform = `scaleX(${py / 100})`;
+    $("#i-no").style.transform = `scaleX(${pn / 100})`;
+  }));
 }
 
 // --- Forms ---
@@ -335,7 +359,8 @@ $("#ptoggle").addEventListener("click", e => {
   const prior = store.get("staxi-v4-voted-" + MOTION);
   if (!prior) return;
   state.vote = prior.vote;
-  try { state.stats = await api(null); showCount(); } catch {}
+  const d = await statsReady;
+  if (d) showCount();
 })();
 </script>
 </body>
