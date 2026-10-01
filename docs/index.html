@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STAX-I · Should the UK have open borders?</title>
+<meta name="description" content="Vote anonymously, then sign up for the STAX-I debate: Thursday 15 October, 7pm, Buchanan Theatre.">
+<meta name="theme-color" content="#1C1A17">
+<style>
+/* Two faces only: Anton for anything shouted, Instrument Sans (STAX's text face) for everything else */
+@font-face{font-family:"Anton";src:url(fonts/anton-400.woff2) format("woff2");font-display:swap}
+@font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-600.woff2) format("woff2");font-weight:600;font-display:swap}
+
+/* STAX tokens, folded to the dark side, plus one hazard colour from the banner */
+:root{
+  --ink:#1C1A17; --ink-2:#26231F; --ink-3:#312D27;
+  --paper:#F4F1EA; --paper-soft:#CFC9BD; --muted:#A39B8B;
+  --line:#3A362F; --line-ctrl:#8C8473;
+  --hazard:#FFE600;
+  --display:"Anton",Impact,sans-serif;
+  --text:"Instrument Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--paper)}
+body{font-family:var(--text);font-size:16px;line-height:1.5;min-height:100svh;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--hazard);outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
+
+.wrap{max-width:520px;margin:0 auto;padding:20px 20px 40px}
+header{padding:12px 0 16px;border-bottom:1px solid var(--line)}
+.mark{font-family:var(--display);font-size:30px;line-height:1;letter-spacing:.5px}
+.mark b{font-weight:400;color:var(--hazard)}
+.label{font-family:var(--text);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.screen{display:none;padding-top:28px;animation:in .35s ease both}
+.screen.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none!important}.bar i{transition:none!important}}
+
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-transform:uppercase;line-height:.98;text-wrap:balance}
+h1{font-size:54px}
+h2{font-size:48px}
+.stamp{font-family:var(--display);font-weight:400;text-transform:uppercase;line-height:.95}
+
+/* Vote: identical treatment for both sides, on purpose */
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px}
+.duel button{min-height:140px;background:none;border:2px solid var(--paper);cursor:pointer;font-family:var(--display);font-size:68px;line-height:1;text-transform:uppercase;transition:transform .1s}
+.duel button:active{transform:scale(.97)}
+.anon{display:flex;gap:8px;align-items:center;margin-top:14px;color:var(--muted)}
+
+/* Live count, shown in place of the buttons */
+.bars{display:none;gap:14px;margin-top:26px}
+.voted .bars{display:grid}
+.voted .duel,.voted .anon{display:none}
+.bar .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.bar .stamp,.bar .pct{font-family:var(--display);font-size:40px;line-height:.95}
+.bar .track{height:18px;background:var(--ink-2);border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--paper);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.bar.mine i{background:var(--hazard)}
+.bar.mine .stamp::after{content:" ← you";font-family:var(--text);font-weight:600;font-size:12px;letter-spacing:.08em;color:var(--hazard);vertical-align:middle}
+/* Event screen */
+.event{margin-top:22px;display:grid;grid-template-columns:repeat(3,auto);justify-content:space-between;gap:8px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.event div{display:grid;gap:2px}
+.event strong{font-family:var(--display);font-weight:400;font-size:26px;line-height:1;text-transform:uppercase}
+
+.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:10px;min-height:60px;margin-top:14px;border:0;background:var(--hazard);color:var(--ink);font-family:var(--display);font-size:24px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--paper)}
+.link{display:block;margin:16px auto 0;background:none;border:0;padding:6px;color:var(--muted);font-family:var(--text);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;cursor:pointer}
+
+/* Form fields: STAX control rules (3:1 boundary + 2px bottom rule) */
+.fields{display:grid;gap:18px;margin-top:22px}
+.field{display:grid;gap:8px}
+.field>label,.q{font-weight:600}
+.input{width:100%;height:54px;padding:0 14px;background:var(--ink-2);border:1px solid var(--line-ctrl);border-bottom:2px solid var(--paper-soft);border-radius:0;font-size:17px;color:var(--paper)}
+.input[aria-invalid=true]{border-color:var(--hazard)}
+.err{color:var(--hazard);font-size:14px;display:none}
+.err.on{display:block}
+fieldset{border:0;padding:0;margin:0}
+legend{padding:0;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line-ctrl);cursor:pointer;font-size:15px}
+.chips input:checked+label{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.chips input:focus-visible+label{outline:3px solid var(--hazard);outline-offset:2px}
+.check{display:flex;gap:12px;align-items:center;cursor:pointer}
+.check input{appearance:none;flex:none;width:24px;height:24px;margin:0;border:2px solid var(--paper-soft);background:var(--ink-2);display:grid;place-content:center;cursor:pointer}
+.check input:checked{background:var(--hazard);border-color:var(--hazard)}
+.check input:checked::after{content:"";width:12px;height:7px;border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:translateY(-2px) rotate(-45deg)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* Done */
+.ticket{margin-top:22px;border:2px solid var(--hazard)}
+.ticket .head{background:var(--hazard);color:var(--ink);padding:12px 16px;font-size:24px;line-height:1.05}
+.ticket .head .label{color:var(--ink)}
+.ticket .body{padding:16px;display:grid;gap:2px}
+.ticket .no{font-family:var(--display);font-size:80px;line-height:.9}
+
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line)}
+footer .link{margin:0;padding:0}
+.privacy{display:none;margin:10px 0 0;color:var(--paper-soft);font-size:14px}
+.privacy.on{display:block}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--paper);color:var(--ink);padding:12px 18px;font-weight:600;transition:transform .25s;z-index:9}
+.toast.on{transform:translateX(-50%) translateY(0)}
+@media (min-width:600px){h1{font-size:68px}.duel button{min-height:170px;font-size:84px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="mark">STAX<b>-I</b></div><div class="label" style="margin-top:6px">St Andrews Xchange of Ideas</div></header>
+
+  <main>
+  <!-- 1. Vote, then the live count in place, then on to the debate -->
+  <section class="screen on" id="s-vote" aria-labelledby="h-vote">
+    <h1 id="h-vote">Should the UK have open borders?</h1>
+    <div class="duel">
+      <button type="button" data-vote="yes">Yes</button>
+      <button type="button" data-vote="no">No</button>
+    </div>
+    <div class="anon label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="11" width="16" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Anonymous vote
+    </div>
+    <div class="bars" aria-live="polite">
+      <div class="bar" id="b-yes"><div class="row"><span class="stamp">Yes</span><span class="pct" id="p-yes">0%</span></div><div class="track"><i id="i-yes"></i></div></div>
+      <div class="bar" id="b-no"><div class="row"><span class="stamp">No</span><span class="pct" id="p-no">0%</span></div><div class="track"><i id="i-no"></i></div></div>
+      <span class="label" id="total"></span>
+    </div>
+</section>
+
+  <!-- 2. The debate -->
+  <section class="screen" id="s-come" aria-labelledby="h-come">
+    <span class="label">The motion</span>
+    <h2 id="h-come" style="margin-top:6px">This house would make the UK's borders open</h2>
+    <div class="event">
+      <div><span class="label">Thursday</span><strong>15 Oct</strong></div>
+      <div><span class="label">Time</span><strong>7pm</strong></div>
+      <div><span class="label">Buchanan</span><strong>Theatre</strong></div>
+    </div>
+    <button class="btn" data-go="s-yes">I want to come →</button>
+    <span class="label" style="display:block;text-align:center;margin-top:10px"><span id="places">32</span> places taken · Free</span>
+    <button class="link" data-go="s-no">Can't make it? Hear about the next one</button>
+  </section>
+
+  <!-- 3a. Coming -->
+  <section class="screen" id="s-yes" aria-labelledby="h-yes">
+    <h2 id="h-yes">Count me in</h2>
+    <form id="f-yes" novalidate>
+      <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="fields">
+        <div class="field"><label for="y-name">First name</label><input class="input" id="y-name" name="first_name" autocomplete="given-name" maxlength="60"><span class="err" id="y-name-err">Add your name.</span></div>
+        <div class="field"><label for="y-email">Email <span class="label">· for one reminder</span></label><input class="input" id="y-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"><span class="err" id="y-email-err">Check your email.</span></div>
+        <fieldset><legend class="q">How did you hear?</legend><div class="chips" data-heard></div></fieldset>
+        <label class="check"><input type="checkbox" name="updates"><span>Tell me about future debates</span></label>
+      </div>
+      <button class="btn" type="submit">Sign me up</button>
+    </form>
+  </section>
+
+  <!-- 3b. Not coming -->
+  <section class="screen" id="s-no" aria-labelledby="h-no">
+    <h2 id="h-no">Hear about the next one</h2>
+    <form id="f-no" novalidate>
+      <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="fields">
+        <div class="field"><label for="n-name">First name</label><input class="input" id="n-name" name="first_name" autocomplete="given-name" maxlength="60"><span class="err" id="n-name-err">Add your name.</span></div>
+        <div class="field"><label for="n-email">Email</label><input class="input" id="n-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"><span class="err" id="n-email-err">Check your email.</span></div>
+      </div>
+      <button class="btn" type="submit">Keep me posted</button>
+    </form>
+  </section>
+
+  <!-- 4. Done -->
+  <section class="screen" id="s-done" aria-labelledby="h-done">
+    <h2 id="h-done" class="stamp" style="font-size:72px">You're in.</h2>
+    <div class="ticket" id="ticket">
+      <div class="head stamp">This house would make the UK's borders open</div>
+      <div class="body">
+        <span class="label">You're number</span>
+        <span class="no" id="t-no">033</span>
+        <span>Thu 15 Oct · 7pm · Buchanan Theatre</span>
+      </div>
+    </div>
+    <button class="btn" id="share">Send to someone who disagrees</button>
+    <button class="btn ghost" id="cal">Add to calendar</button>
+  </section>
+  </main>
+
+  <footer>
+    <button class="link" id="ptoggle" aria-expanded="false" aria-controls="privacy">Privacy</button>
+    <p class="privacy" id="privacy">Votes are never stored with names, only counted. Your email is used for the reminder (and future debates if you ticked), never shared, and deleted within six months. Questions or removal: <span id="contact">bridgemanhector@gmail.com</span>.</p>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// Paste the Apps Script web app URL here. Left empty, the page runs in demo mode on this device only.
+const API_URL = "";
+const SEED_PLACES = 32;
+const SEED_VOTES = { yes: 22, no: 14 }; // starting count, added to real votes (mirror in Code.gs)
+const MOTION = "001";
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const state = { vote: null, stats: null };
+const pad = n => String(n).padStart(3, "0");
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+// --- Backend (Apps Script, or a local demo stand-in) ---
+async function api(payload) {
+  if (!API_URL) return demo(payload);
+  const res = payload
+    ? await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
+    : await fetch(API_URL);
+  if (!res.ok) throw new Error("Network");
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+function demo(p) {
+  const d = store.get("staxi-demo-v4") || { ...SEED_VOTES, places: SEED_PLACES };
+  if (p && p.type === "vote") d[p.vote]++;
+  if (p && p.type === "signup" && p.attending === "yes") d.places++;
+  store.set("staxi-demo-v4", d);
+  return new Promise(r => setTimeout(() => r({ ...d }), 300));
+}
+
+function go(id) {
+  $$(".screen").forEach(s => s.classList.toggle("on", s.id === id));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  const h = $("#" + id + " h1, #" + id + " h2");
+  if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+}
+$$("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+// --- Vote: one tap, then the count appears in place ---
+$$("[data-vote]").forEach(b => b.addEventListener("click", async () => {
+  if (state.vote) return;
+  state.vote = b.dataset.vote;
+  $$("[data-vote]").forEach(x => x.disabled = true);
+  b.style.background = "var(--hazard)"; b.style.color = "var(--ink)"; b.style.borderColor = "var(--hazard)";
+  try {
+    state.stats = await api({ type: "vote", motion: MOTION, vote: state.vote });
+    store.set("staxi-v4-voted-" + MOTION, { vote: state.vote });
+    showCount();
+  } catch (e) {
+    state.vote = null; $$("[data-vote]").forEach(x => { x.disabled = false; x.removeAttribute("style"); });
+    toast("Couldn't count that. Try again.");
+  }
+}));
+function showCount() {
+  const { yes, no, places } = state.stats, n = yes + no, total = n || 1;
+  const py = Math.round(yes / total * 100), pn = n ? 100 - py : 0;
+  $("#b-yes").classList.toggle("mine", state.vote === "yes");
+  $("#b-no").classList.toggle("mine", state.vote === "no");
+  $("#p-yes").textContent = py + "%"; $("#p-no").textContent = pn + "%";
+  $("#total").textContent = n + (n === 1 ? " vote" : " votes") + " so far";
+  $("#places").textContent = places;
+  $("#s-vote").classList.add("voted");
+  requestAnimationFrame(() => setTimeout(() => { $("#i-yes").style.width = py + "%"; $("#i-no").style.width = pn + "%"; }, 80));
+  setTimeout(() => { if ($("#s-vote").classList.contains("on")) go("s-come"); }, 3000);
+}
+
+// --- Forms ---
+const HEARD = ["Market Street", "Instagram", "A friend", "A society", "Other"];
+$$("[data-heard]").forEach((box, f) => {
+  box.innerHTML = HEARD.map((h, i) => `<input type="radio" name="heard" id="h${f}-${i}" value="${h}"><label for="h${f}-${i}">${h}</label>`).join("");
+});
+const okEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+function need(input, errEl, ok) {
+  input.setAttribute("aria-invalid", ok ? "false" : "true");
+  $(errEl).classList.toggle("on", !ok);
+  return ok;
+}
+
+async function submit(form, attending) {
+  const f = new FormData(form);
+  if (f.get("website")) return; // bot
+  const p = attending === "yes" ? "y" : "n";
+  const name = (f.get("first_name") || "").trim(), email = (f.get("email") || "").trim();
+  const a = need($(`#${p}-name`), `#${p}-name-err`, name.length > 0);
+  const b = need($(`#${p}-email`), `#${p}-email-err`, okEmail(email));
+  if (!a || !b) { $(`#${p}-${a ? "email" : "name"}`).focus(); return; }
+  const btn = $("button[type=submit]", form), label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    state.stats = await api({
+      type: "signup", motion: MOTION, attending, first_name: name, email,
+      heard: f.get("heard") || "",
+      // Not coming + leaving an email is itself the opt-in to hear about the next one
+      updates: attending === "no" || f.get("updates") === "on"
+    });
+    if (attending === "yes") $("#t-no").textContent = pad(state.stats.places);
+    else { $("#h-done").textContent = "Noted."; $("#ticket").remove(); $("#cal").remove(); }
+    go("s-done");
+  } catch (e) {
+    toast("That didn't send. Try again."); btn.disabled = false; btn.textContent = label;
+  }
+}
+$("#f-yes").addEventListener("submit", e => { e.preventDefault(); submit(e.target, "yes"); });
+$("#f-no").addEventListener("submit", e => { e.preventDefault(); submit(e.target, "no"); });
+
+// --- Done ---
+$("#share").addEventListener("click", async () => {
+  const data = { title: "Should the UK have open borders?", text: "I've voted. Bet you disagree.", url: location.href.split("#")[0] };
+  if (navigator.share) { try { await navigator.share(data); } catch {} return; }
+  try { await navigator.clipboard.writeText(data.url); toast("Link copied"); } catch { toast(data.url); }
+});
+$("#cal").addEventListener("click", () => {
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//STAX-I//Motion 001//EN", "BEGIN:VEVENT",
+    "UID:staxi-motion-001@staxi", "DTSTAMP:20261001T000000Z",
+    "DTSTART;TZID=Europe/London:20261015T190000", "DTEND;TZID=Europe/London:20261015T210000",
+    "SUMMARY:STAX-I Debate: Should the UK have open borders?",
+    "LOCATION:Buchanan Theatre\\, St Andrews", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = "staxi-debate.ics"; a.click();
+});
+$("#ptoggle").addEventListener("click", e => {
+  e.target.setAttribute("aria-expanded", $("#privacy").classList.toggle("on"));
+});
+
+// Already voted on this device? Show the live count straight away.
+(async function init() {
+  const prior = store.get("staxi-v4-voted-" + MOTION);
+  if (!prior) return;
+  state.vote = prior.vote;
+  try { state.stats = await api(null); showCount(); } catch {}
+})();
+</script>
+</body>
+</html>
