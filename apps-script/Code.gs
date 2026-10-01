@@ -12,7 +12,7 @@ function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const tally = sheet_(ss, 'Tally', ['vote', 'count']);
   if (tally.getLastRow() === 1) tally.getRange(2, 1, 2, 2).setValues([['yes', 0], ['no', 0]]);
-  sheet_(ss, 'Signups', ['timestamp', 'attending', 'first_name', 'email', 'heard', 'future_updates']);
+  sheet_(ss, 'Signups', ['timestamp', 'attending', 'first_name', 'email', 'heard', 'future_updates', 'speak_future']);
 }
 
 function sheet_(ss, name, headers) {
@@ -38,9 +38,11 @@ function doPost(e) {
     } else if (p.type === 'signup') {
       const email = clean_(p.email, 120);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error('bad email');
-      ss.getSheetByName('Signups').appendRow([
+      const signups = ss.getSheetByName('Signups');
+      if (!signups.getRange(1, 7).getValue()) signups.getRange(1, 7).setValue('speak_future'); // column added after launch
+      signups.appendRow([
         new Date(), p.attending === 'yes' ? 'yes' : 'no', clean_(p.first_name, 60), email,
-        clean_(p.heard, 40), p.updates ? 'yes' : ''
+        clean_(p.heard, 40), p.updates ? 'yes' : '', ['yes', 'no'].includes(p.speak) ? p.speak : ''
       ]);
     } else {
       throw new Error('bad type');
