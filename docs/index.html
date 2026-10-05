@@ -114,7 +114,7 @@ footer .link{margin:0;padding:0}
   <header><div class="mark">STAX<b>-I</b></div><div class="label" style="margin-top:6px">St Andrews Xchange of Ideas</div></header>
 
   <main>
-  <!-- 1. Vote, then the live count in place, then on to the debate -->
+  <!-- 1. Vote, then the live count in place, with a button on to the debate -->
   <section class="screen on" id="s-vote" aria-labelledby="h-vote">
     <h1 id="h-vote">Should the UK have open borders?</h1>
     <div class="duel">
@@ -129,6 +129,7 @@ footer .link{margin:0;padding:0}
       <div class="bar" id="b-yes"><div class="row"><span class="stamp">Yes</span><span class="pct" id="p-yes">0%</span></div><div class="track"><i id="i-yes"></i></div></div>
       <div class="bar" id="b-no"><div class="row"><span class="stamp">No</span><span class="pct" id="p-no">0%</span></div><div class="track"><i id="i-no"></i></div></div>
       <span class="label" id="total"></span>
+      <button class="btn" type="button" data-go="s-come">Continue to sign up →</button>
     </div>
 </section>
 
@@ -282,12 +283,9 @@ async function send(payload, tries) {
     if (tries > 1) { await wait(2000); send(payload, tries - 1); }
   }
 }
-let advance;
 function showCount() {
   paint();
   $("#s-vote").classList.add("voted");
-  clearTimeout(advance);
-  advance = setTimeout(() => { if ($("#s-vote").classList.contains("on")) go("s-come"); }, 3000);
 }
 function paint() {
   const { yes, no, places } = state.stats, n = yes + no, total = n || 1;
