@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STAX-I · Final vote</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1C1A17">
+<link rel="stylesheet" href="../debate.css">
+</head>
+<body>
+<div class="wrap">
+  <header><div class="mark">STAX<b>-I</b></div><div class="label" style="margin-top:6px">St Andrews Xchange of Ideas</div></header>
+  <main>
+    <section class="screen on" id="s-vote" aria-labelledby="h-vote">
+      <span class="phase">2 · Final vote</span>
+      <h1 id="h-vote">This House Would Make the UK's Borders Open</h1>
+      <div class="opts" role="group" aria-label="Your vote">
+        <button type="button" data-vote="for">For</button>
+        <button type="button" data-vote="against">Against</button>
+        <button type="button" class="und" data-vote="undecided">Undecided</button>
+      </div>
+      <p class="err" id="vote-err" role="alert" hidden>That didn't go through. Check your signal and tap again.</p>
+      <p class="note">Anonymous. One vote per phone. Has the debate changed your mind?</p>
+    </section>
+
+    <section class="screen" id="s-closed" aria-labelledby="h-closed">
+      <span class="phase">2 · Final vote</span>
+      <p class="big" id="h-closed">The final vote opens at the end.</p>
+      <p class="note">The chair will tell you when to vote. This page will open by itself, so keep it open.</p>
+    </section>
+
+    <section class="screen" id="s-done" aria-labelledby="h-done" aria-live="polite">
+      <span class="phase">2 · Final vote</span>
+      <p class="big" id="h-done">Vote counted.<br><b id="you"></b></p>
+      <p class="note">Thank you. The result will be announced shortly.</p>
+      <div class="follow" id="follow">
+        <h2>Stay in the loop</h2>
+        <p class="note" style="margin-top:8px">Both optional. Saved separately from your vote, so it can't be linked to how you voted.</p>
+        <form id="follow-form" novalidate>
+          <div class="field">
+            <label for="contact">Email or phone number <span class="hint">· to hear about future debates</span></label>
+            <input class="input" id="contact" name="contact" type="text" autocomplete="email" inputmode="email" maxlength="120">
+          </div>
+          <div class="field">
+            <label for="suggestion">Suggest our next motion</label>
+            <textarea class="input" id="suggestion" name="suggestion" maxlength="400" placeholder="This House would…"></textarea>
+          </div>
+          <p class="err" id="follow-err" role="alert" hidden></p>
+          <button class="send" id="follow-send" type="submit">Send</button>
+          <p class="privacy">Only used to tell you about STAX-I events. Never shared. To be removed, email bridgemanhector@gmail.com.</p>
+        </form>
+        <p class="thanks" id="follow-thanks" role="status" hidden>Thank you. We'll be in touch.</p>
+      </div>
+    </section>
+  </main>
+</div>
+<script>window.PHASE = "final";</script>
+<script src="../debate.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STAX-I · Opening vote</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1C1A17">
+<link rel="stylesheet" href="../debate.css">
+</head>
+<body>
+<div class="wrap">
+  <header><div class="mark">STAX<b>-I</b></div><div class="label" style="margin-top:6px">St Andrews Xchange of Ideas</div></header>
+  <main>
+    <section class="screen on" id="s-vote" aria-labelledby="h-vote">
+      <span class="phase">1 · Opening vote</span>
+      <h1 id="h-vote">This House Would Make the UK's Borders Open</h1>
+      <div class="opts" role="group" aria-label="Your vote">
+        <button type="button" data-vote="for">For</button>
+        <button type="button" data-vote="against">Against</button>
+        <button type="button" class="und" data-vote="undecided">Undecided</button>
+      </div>
+      <p class="err" id="vote-err" role="alert" hidden>That didn't go through. Check your signal and tap again.</p>
+      <p class="note">Anonymous. One vote per phone. Undecided counts too.</p>
+    </section>
+
+    <section class="screen" id="s-closed" aria-labelledby="h-closed">
+      <span class="phase">1 · Opening vote</span>
+      <p class="big" id="h-closed">The opening vote isn’t open.</p>
+      <p class="note">The chair will tell you when to vote. This page will open by itself, so keep it open.</p>
+    </section>
+
+    <section class="screen" id="s-done" aria-labelledby="h-done" aria-live="polite">
+      <span class="phase">1 · Opening vote</span>
+      <p class="big" id="h-done">Vote counted.<br><b id="you"></b></p>
+      <p class="note">Thank you. Keep this paper: you’ll scan the second code for the final vote at the end.</p>
+
+    </section>
+  </main>
+</div>
+<script>window.PHASE = "open";</script>
+<script src="../debate.js"></script>
+</body>
+</html>

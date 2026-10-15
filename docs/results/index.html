@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STAX-I · Results</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1C1A17">
+<link rel="stylesheet" href="../debate.css">
+<style>
+table{width:100%;border-collapse:collapse;margin-top:18px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 0;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td{font-size:18px}
+td.side{font-family:var(--display);text-transform:uppercase;font-size:26px}
+.chg{font-weight:600}
+.up{color:var(--hazard)}
+.verdict{margin-top:26px;padding:18px;border:2px solid var(--hazard)}
+.verdict .big{margin-top:6px;font-size:52px}
+.state{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.state span{padding:6px 10px;border:1px solid var(--line);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.state span.on{background:var(--hazard);border-color:var(--hazard);color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="mark">STAX<b>-I</b></div><div class="label" style="margin-top:6px">Results · for the chair</div></header>
+  <main>
+    <h1 style="margin-top:24px;font-size:40px">This House Would Make the UK's Borders Open</h1>
+    <div class="state" id="state"></div>
+    <table aria-describedby="totals">
+      <thead><tr><th scope="col">Side</th><th scope="col">Opening</th><th scope="col">Final</th><th scope="col">Change</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="note" id="totals"></p>
+    <div class="verdict" aria-live="polite"><div class="label">Result</div><p class="big" id="verdict">Waiting for votes</p><p class="note" id="why" style="margin-top:6px"></p></div>
+    <p class="note">Updates every 5 seconds. Winner = the side whose share of the vote grew more between the opening and final votes. Paper votes: add them to the numbers in the Debate tab of the sheet.</p>
+    <p class="err" id="err" hidden>Can't reach the sheet. Retrying…</p>
+  </main>
+</div>
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzU-1PlAcnk0gN-YRhKIbiK_9KYjFfIQ6aFJ4YZTjgnWZWiWunRcPZcNQKLkKl_CWKy/exec";
+const SIDES = [["for","For"],["against","Against"],["undecided","Undecided"]];
+const $ = s => document.querySelector(s);
+const total = p => p ? p.for + p.against + p.undecided : 0;
+const pct = (p, k) => total(p) ? 100 * p[k] / total(p) : 0;
+const f = n => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, "");
+const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "±") + f(Math.abs(n));
+
+function render(d) {
+  const o = d.open, fi = d.final;
+  $("#state").innerHTML = "";
+  [["Opening vote", o], ["Final vote", fi]].forEach(([name, p]) => {
+    const s = document.createElement("span");
+    s.textContent = name + (p && p.accepting ? ": open" : ": closed");
+    s.className = p && p.accepting ? "on" : "";
+    $("#state").append(s);
+  });
+  const hasFinal = total(fi) > 0;
+  $("#rows").innerHTML = "";
+  SIDES.forEach(([k, name]) => {
+    const tr = document.createElement("tr");
+    const ch = pct(fi, k) - pct(o, k);
+    const cells = [
+      [name, "side"],
+      [`${f(pct(o, k))}% (${o ? o[k] : 0})`, ""],
+      [hasFinal ? `${f(pct(fi, k))}% (${fi[k]})` : "–", ""],
+      [hasFinal ? signed(ch) : "–", "chg" + (hasFinal && ch > 0 ? " up" : "")]
+    ];
+    cells.forEach(([t, c]) => { const td = document.createElement("td"); td.textContent = t; if (c) td.className = c; tr.append(td); });
+    $("#rows").append(tr);
+  });
+  $("#totals").textContent = `Opening: ${total(o)} votes · Final: ${total(fi)} votes`;
+  if (!hasFinal) { $("#verdict").textContent = total(o) ? "Waiting for the final vote" : "Waiting for votes"; $("#why").textContent = ""; return; }
+  const dFor = pct(fi, "for") - pct(o, "for"), dAg = pct(fi, "against") - pct(o, "against");
+  if (Math.abs(dFor - dAg) < 0.05) { $("#verdict").textContent = "A draw"; }
+  else { $("#verdict").textContent = (dFor > dAg ? "The proposition" : "The opposition") + " wins"; }
+  $("#why").textContent = `For ${signed(dFor)} points · Against ${signed(dAg)} points`;
+}
+
+async function tick() {
+  try {
+    const r = await fetch(API_URL + "?debate=1&t=" + Date.now());
+    const d = await r.json();
+    if (!d.open) throw new Error();
+    render(d); $("#err").hidden = true;
+  } catch { $("#err").hidden = false; }
+}
+tick(); setInterval(tick, 5000);
+</script>
+</body>
+</html>

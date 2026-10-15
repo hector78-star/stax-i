@@ -21,8 +21,52 @@ function sheet_(ss, name, headers) {
   return sh;
 }
 
-function doGet() {
+function doGet(e) {
+  if (e && e.parameter && e.parameter.debate) return json_(debateStats_());
   return json_(stats_());
+}
+
+// --- Debate night: opening and final votes (For / Against / Undecided) ---
+// The Debate tab is created automatically on first use. Tick or untick the
+// "accepting" boxes in that tab to open and close each vote.
+const DEBATE_PHASES = ['open', 'final'];
+const DEBATE_OPTIONS = ['for', 'against', 'undecided'];
+
+function debateSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('Debate');
+  if (!sh) {
+    sh = ss.insertSheet('Debate');
+    sh.getRange(1, 1, 3, 5).setValues([
+      ['phase', 'for', 'against', 'undecided', 'accepting'],
+      ['open', 0, 0, 0, true],
+      ['final', 0, 0, 0, false]
+    ]);
+    sh.getRange(2, 5, 2, 1).insertCheckboxes();
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function debateStats_() {
+  const rows = debateSheet_().getRange(2, 1, 2, 5).getValues();
+  const out = {};
+  rows.forEach(r => {
+    out[r[0]] = { for: Number(r[1]) || 0, against: Number(r[2]) || 0, undecided: Number(r[3]) || 0, accepting: r[4] === true };
+  });
+  return out;
+}
+
+function debateVote_(p) {
+  if (!DEBATE_PHASES.includes(p.phase)) throw new Error('bad phase');
+  if (!DEBATE_OPTIONS.includes(p.vote)) throw new Error('bad vote');
+  const sh = debateSheet_();
+  const row = 2 + DEBATE_PHASES.indexOf(p.phase);
+  if (sh.getRange(row, 5).getValue() !== true) return { error: 'closed' };
+  const cell = sh.getRange(row, 2 + DEBATE_OPTIONS.indexOf(p.vote));
+  cell.setValue(Number(cell.getValue()) + 1);
+  SpreadsheetApp.flush();
+  return Object.assign({ ok: true }, debateStats_());
 }
 
 function doPost(e) {
@@ -31,7 +75,16 @@ function doPost(e) {
   try {
     const p = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (p.type === 'vote') {
+    if (p.type === 'debate') {
+      return json_(debateVote_(p));
+    } else if (p.type === 'followup') {
+      // Stored apart from the vote, with no link to it, so votes stay anonymous.
+      const contact = clean_(p.contact, 120), suggestion = clean_(p.suggestion, 400);
+      if (!contact && !suggestion) throw new Error('empty');
+      sheet_(ss, 'Followups', ['timestamp', 'contact', 'motion_suggestion']).appendRow([new Date(), contact, suggestion]);
+      SpreadsheetApp.flush();
+      return json_({ ok: true });
+    } else if (p.type === 'vote') {
       if (!['yes', 'no'].includes(p.vote)) throw new Error('bad vote');
       const cell = ss.getSheetByName('Tally').getRange(p.vote === 'yes' ? 2 : 3, 2);
       cell.setValue(Number(cell.getValue()) + 1);
