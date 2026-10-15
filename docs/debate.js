@@ -3,7 +3,7 @@
 const API_URL = window.DEBATE_API;
 const PHASE = window.PHASE;
 const KEY = "staxi-debate-" + PHASE;
-const LABEL = { for: "For", against: "Against", undecided: "Undecided" };
+const LABEL = { for: "For", against: "Against" };
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
