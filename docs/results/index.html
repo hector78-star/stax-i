@@ -39,8 +39,9 @@ td.side{font-family:var(--display);text-transform:uppercase;font-size:26px}
     <p class="err" id="err" hidden>Can't reach the sheet. Retrying…</p>
   </main>
 </div>
+<script src="../debate-config.js"></script>
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzU-1PlAcnk0gN-YRhKIbiK_9KYjFfIQ6aFJ4YZTjgnWZWiWunRcPZcNQKLkKl_CWKy/exec";
+const API_URL = window.DEBATE_API;
 const SIDES = [["for","For"],["against","Against"],["undecided","Undecided"]];
 const $ = s => document.querySelector(s);
 const total = p => p ? p.for + p.against + p.undecided : 0;

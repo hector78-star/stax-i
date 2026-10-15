@@ -1,6 +1,6 @@
 // Debate-night vote. The page sets window.PHASE to "open" or "final" before loading this.
-// Same backend as index.html (Code.gs, type "debate"). One vote per phase per device.
-const API_URL = "https://script.google.com/macros/s/AKfycbzU-1PlAcnk0gN-YRhKIbiK_9KYjFfIQ6aFJ4YZTjgnWZWiWunRcPZcNQKLkKl_CWKy/exec";
+// Backend: apps-script/Debate.gs on its own sheet (URL in debate-config.js). One vote per phase per device.
+const API_URL = window.DEBATE_API;
 const PHASE = window.PHASE;
 const KEY = "staxi-debate-" + PHASE;
 const LABEL = { for: "For", against: "Against", undecided: "Undecided" };
